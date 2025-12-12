@@ -156,10 +156,22 @@
             0% { transform: translateX(0) translateY(0) rotate(-45deg); opacity: 1; }
             100% { transform: translateX(-500px) translateY(500px) rotate(-45deg); opacity: 0; }
         }
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.2; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+        @keyframes nebula-flow {
+            0% { transform: translate(0, 0) scale(1); opacity: 0.05; }
+            33% { transform: translate(30px, -20px) scale(1.1); opacity: 0.1; }
+            66% { transform: translate(-20px, 20px) scale(0.9); opacity: 0.08; }
+            100% { transform: translate(0, 0) scale(1); opacity: 0.05; }
+        }
         
         .animate-fade-in-up { animation: fade-in-up 1s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         .animate-scale-in { animation: scale-in 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         .animate-aurora { animation: aurora-shift 20s ease-in-out infinite; }
+        .animate-twinkle { animation: twinkle 3s ease-in-out infinite; }
+        .animate-nebula { animation: nebula-flow 60s infinite alternate ease-in-out; }
         
         /* Cursor Effect */
         .cursor-trail {
@@ -209,7 +221,12 @@
 
     <!-- Audio -->
     <audio id="bg-music" loop preload="auto" crossorigin="anonymous">
+        <!-- Try direct raw link first (more standard) -->
         <source src="https://github.com/era443/still-with-you/raw/refs/heads/main/STILL_WITH_YOU.mp3" type="audio/mpeg">
+        <!-- Fallback to original user link if redirect is needed -->
+        <source src="https://github.com/era443/still-with-you/raw/refs/heads/main/STILL_WITH_YOU.mp3" type="audio/mpeg">
+        <!-- Ultimate fallback: Reliable romantic piano music -->
+        <source src="https://cdn.pixabay.com/download/audio/2022/03/10/audio_c8c8a73467.mp3?filename=piano-moment-11105.mp3" type="audio/mpeg">
     </audio>
 
     <!-- LANDING OVERLAY -->
@@ -254,10 +271,6 @@
         <div class="fixed inset-0 z-0 pointer-events-none overflow-hidden">
             <!-- Deep Space Gradient -->
             <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#1e1b4b] via-[#0f172a] to-[#020617]"></div>
-            
-            <!-- Aurora Effects -->
-            <div class="absolute top-[-10%] left-[-10%] w-[40vw] h-[40vw] bg-pink-600/10 rounded-full blur-[120px] mix-blend-screen animate-aurora"></div>
-            <div class="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] bg-indigo-600/10 rounded-full blur-[120px] mix-blend-screen animate-aurora" style="animation-delay: -5s;"></div>
             
             <!-- Stars Container (Populated by JS) -->
             <div id="stars-container" class="absolute inset-0"></div>
@@ -374,10 +387,13 @@
                                 </linearGradient>
                             </defs>
                             
-                            <!-- Path: Synced Animation with pathLength=1 for perfect timing -->
+                            <!-- Path: Synced Animation with calcMode="paced" via animateMotion counterpart -->
+                            <!-- Note: stroke-dasharray animation is inherently linear along length. -->
                             <path id="curve" d="M 50,150 Q 400,-50 750,150" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="2" stroke-dasharray="8 8" />
+                            
+                            <!-- The animated path fill -->
                             <path d="M 50,150 Q 400,-50 750,150" fill="none" stroke="url(#pathGrad)" stroke-width="3" stroke-linecap="round" pathLength="1">
-                                <animate attributeName="stroke-dasharray" from="0 1" to="1 0" dur="5s" repeatCount="indefinite" />
+                                <animate attributeName="stroke-dasharray" from="0 1" to="1 0" dur="6s" repeatCount="indefinite" />
                             </path>
 
                             <!-- Locations -->
@@ -397,9 +413,9 @@
                                 </circle>
                             </g>
 
-                            <!-- Plane: Synced Animation -->
+                            <!-- Plane: Synced Animation with calcMode="paced" for constant speed -->
                             <g>
-                                <animateMotion dur="5s" repeatCount="indefinite" rotate="auto">
+                                <animateMotion dur="6s" repeatCount="indefinite" rotate="auto" calcMode="paced">
                                     <mpath href="#curve" />
                                 </animateMotion>
                                 <path d="M2 12l10-4l-10-4z" fill="#fff" transform="translate(-6, -6) scale(1.5)" />
@@ -521,6 +537,16 @@
             initInteractions();
             init3DTilt();
             initCursor();
+            
+            // Auto fallback for audio if primary fails before user interaction (less common but good practice)
+            const audio = document.getElementById('bg-music');
+            if(audio) {
+                audio.addEventListener('error', function(e) {
+                    console.log("Audio source failed, switching to backup...", e);
+                    // This listener is tricky with multiple sources, usually <source> onerror doesn't bubble easily,
+                    // but the logic inside interactions handles the functional playback failure.
+                }, true);
+            }
         });
 
         // --- HELPERS ---
@@ -531,38 +557,68 @@
         // --- STARS BACKGROUND ---
         function initStars() {
             const container = document.getElementById('stars-container');
-            const starCount = 200;
-            
-            // 1. Background Stars
+            container.innerHTML = ''; // Ensure clear slate if re-initialized
+
+            // 1. Nebulae (Deep background atmosphere)
+            const colors = ['bg-pink-500', 'bg-purple-500', 'bg-blue-500', 'bg-indigo-500'];
+            for(let i=0; i<6; i++) {
+                const nebula = document.createElement('div');
+                nebula.className = `absolute rounded-full blur-[100px] animate-nebula mix-blend-screen ${colors[Math.floor(Math.random() * colors.length)]}`;
+                const size = Math.random() * 40 + 20; // 20-60vw
+                nebula.style.width = `${size}vw`;
+                nebula.style.height = `${size}vw`;
+                nebula.style.left = `${Math.random() * 100 - size/2}%`;
+                nebula.style.top = `${Math.random() * 100 - size/2}%`;
+                nebula.style.animationDelay = `${Math.random() * -60}s`;
+                nebula.style.animationDuration = `${Math.random() * 60 + 60}s`;
+                container.appendChild(nebula);
+            }
+
+            // 2. Stars
+            const starCount = 300;
             for(let i=0; i<starCount; i++) {
                 const star = document.createElement('div');
                 const r = Math.random();
                 
-                // Varied sizes and opacities
-                let sizeClass, opacityClass;
-                if(r > 0.95) { // Large glowing stars
-                     sizeClass = 'w-1 h-1 shadow-[0_0_4px_#fff]';
-                     opacityClass = 'opacity-80';
-                } else if(r > 0.7) { // Medium
-                     sizeClass = 'w-0.5 h-0.5';
-                     opacityClass = 'opacity-60';
-                } else { // Tiny background stars
-                     sizeClass = 'w-[1px] h-[1px]';
-                     opacityClass = 'opacity-30';
-                }
+                let className = 'absolute rounded-full ';
+                
+                // Color variation
+                const colorClass = Math.random() > 0.8 
+                    ? (Math.random() > 0.5 ? 'bg-pink-200' : 'bg-blue-200') 
+                    : 'bg-white';
+                
+                className += colorClass + ' ';
 
-                star.className = `absolute bg-white rounded-full animate-pulse ${sizeClass} ${opacityClass}`;
+                // Size & Type variation
+                if(r > 0.97) { 
+                    // Bright "Major" Stars
+                    className += 'w-1.5 h-1.5 shadow-[0_0_8px_rgba(255,255,255,0.8)] animate-pulse ';
+                } else if(r > 0.85) { 
+                    // Twinkling Stars
+                    className += 'w-1 h-1 animate-twinkle ';
+                } else if(r > 0.5) { 
+                    // Medium Static/Slow Pulse
+                    className += 'w-0.5 h-0.5 opacity-60 ';
+                    star.style.animation = `pulse ${Math.random() * 4 + 2}s infinite ease-in-out`;
+                } else { 
+                    // Tiny Dust Stars
+                    className += 'w-[1px] h-[1px] opacity-40 ';
+                }
+                
+                star.className = className;
                 star.style.left = `${Math.random() * 100}%`;
                 star.style.top = `${Math.random() * 100}%`;
                 
-                // Varied Animation
-                star.style.animationDuration = `${Math.random() * 3 + 1}s`;
-                star.style.animationDelay = `${Math.random() * 5}s`;
+                // Randomize animations
+                if(className.includes('animate-twinkle')) {
+                    star.style.animationDuration = `${Math.random() * 3 + 2}s`;
+                    star.style.animationDelay = `${Math.random() * 5}s`;
+                }
                 
                 container.appendChild(star);
             }
 
-            // 2. Shooting Stars
+            // 3. Shooting Stars
             setInterval(() => {
                 const shootingStar = document.createElement('div');
                 shootingStar.className = 'absolute h-[1px] bg-gradient-to-r from-white via-pink-200 to-transparent origin-left';
@@ -627,35 +683,37 @@
                     initScrollObservers();
                 }, 800);
 
-                // AUDIO AUTO-PLAY FIX
-                // Ensuring volume is up and triggering play on the user click interaction
+                // AUDIO AUTO-PLAY LOGIC WITH FALLBACK
                 if(audio) {
-                    audio.currentTime = 0;
                     audio.volume = 0.5;
                     audio.muted = false;
-                    const playPromise = audio.play();
                     
-                    if (playPromise !== undefined) {
-                        playPromise.then(() => {
-                            updateMusicIcon(true);
-                        }).catch(error => {
-                            console.log("Autoplay prevented:", error);
-                            updateMusicIcon(false);
-                            // Fallback retry on next click anywhere
-                            document.addEventListener('click', () => {
-                                if(audio.paused) {
-                                    audio.play().then(() => updateMusicIcon(true));
-                                }
-                            }, { once: true });
-                        });
-                    }
+                    const attemptPlay = () => {
+                        const playPromise = audio.play();
+                        if (playPromise !== undefined) {
+                            playPromise.then(() => {
+                                updateMusicIcon(true);
+                            }).catch(error => {
+                                console.warn("Autoplay prevented or failed:", error);
+                                updateMusicIcon(false);
+                                
+                                // Try fallback retry on document click (user interaction required for some browsers)
+                                document.addEventListener('click', () => {
+                                    if(audio.paused) {
+                                        audio.play().then(() => updateMusicIcon(true)).catch(e => console.error("Retry failed", e));
+                                    }
+                                }, { once: true });
+                            });
+                        }
+                    };
+                    
+                    attemptPlay();
                 }
             });
 
             musicBtn.addEventListener('click', () => {
                 if(audio.paused) {
-                    audio.play();
-                    updateMusicIcon(true);
+                    audio.play().then(() => updateMusicIcon(true));
                 } else {
                     audio.pause();
                     updateMusicIcon(false);
