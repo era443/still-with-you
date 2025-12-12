@@ -56,6 +56,10 @@
     
     <style>
         /* Global Reset & Base */
+        html, body, a, button, [role="button"], input, select, textarea {
+            cursor: none !important; /* Force hide real cursor everywhere */
+        }
+
         body {
             background-color: #020617;
             color: #e2e8f0;
@@ -148,6 +152,10 @@
             50% { transform: translate(20px, -20px) scale(1.1); filter: hue-rotate(30deg); }
             100% { transform: translate(0, 0) scale(1); filter: hue-rotate(0deg); }
         }
+        @keyframes shooting {
+            0% { transform: translateX(0) translateY(0) rotate(-45deg); opacity: 1; }
+            100% { transform: translateX(-500px) translateY(500px) rotate(-45deg); opacity: 0; }
+        }
         
         .animate-fade-in-up { animation: fade-in-up 1s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         .animate-scale-in { animation: scale-in 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
@@ -156,15 +164,29 @@
         /* Cursor Effect */
         .cursor-trail {
             position: fixed;
-            width: 8px;
-            height: 8px;
+            width: 12px;
+            height: 12px;
             background: white;
             border-radius: 50%;
             pointer-events: none;
             z-index: 9999;
             mix-blend-mode: screen;
             box-shadow: 0 0 10px white, 0 0 20px #ec4899;
-            transition: transform 0.1s;
+            transition: transform 0.05s linear;
+        }
+
+        /* Timer Card Styling */
+        .timer-card {
+            background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0) 100%);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-top: 1px solid rgba(255,255,255,0.2);
+            transition: transform 0.3s;
+        }
+        .timer-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(236, 72, 153, 0.2);
         }
     </style>
 <script type="importmap">
@@ -186,7 +208,7 @@
     <div id="cursor" class="cursor-trail hidden md:block"></div>
 
     <!-- Audio -->
-    <audio id="bg-music" loop preload="auto">
+    <audio id="bg-music" loop preload="auto" crossorigin="anonymous">
         <source src="https://github.com/era443/still-with-you/raw/refs/heads/main/STILL_WITH_YOU.mp3" type="audio/mpeg">
     </audio>
 
@@ -292,6 +314,16 @@
                         <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30"></div>
                     </div>
 
+                    <!-- New Hover Overlay -->
+                    <div class="absolute inset-0 z-30 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col items-center justify-center translate-z-20 backdrop-blur-sm">
+                        <div class="border border-white/20 bg-white/5 rounded-full px-6 py-2 mb-4 backdrop-blur-md transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500 delay-100">
+                             <span class="text-pink-200 font-romantic text-3xl">Dec 5, 2023</span>
+                        </div>
+                        <div class="text-white font-serif italic text-lg transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500 delay-200">
+                            "The day our stars aligned"
+                        </div>
+                    </div>
+
                     <!-- Floating UI -->
                     <div class="absolute top-6 left-6 right-6 flex justify-between items-start translate-z-20">
                         <div class="px-3 py-1.5 rounded-full glass-panel flex items-center gap-2">
@@ -301,17 +333,17 @@
                         <i data-lucide="wifi" class="w-5 h-5 text-white/80"></i>
                     </div>
 
-                    <div class="absolute bottom-8 left-0 right-0 text-center translate-z-20">
+                    <div class="absolute bottom-8 left-0 right-0 text-center translate-z-20 group-hover:opacity-0 transition-opacity duration-300">
                         <div class="inline-flex items-center justify-center w-14 h-14 rounded-full glass-panel mb-4 group-hover:scale-110 transition-transform duration-300 border border-pink-500/30">
                             <i data-lucide="heart" class="w-6 h-6 text-pink-400 fill-pink-400/20 animate-pulse"></i>
                         </div>
-                        <h3 class="font-serif text-2xl text-white italic">My Favorite View</h3>
+                        <h3 class="font-serif text-2xl text-white italic">Best View</h3>
                     </div>
                 </div>
             </div>
 
             <!-- Countdown Timer -->
-            <div id="timer" class="flex flex-wrap justify-center gap-6 mt-20 animate-fade-in-up" style="animation-delay: 1s;">
+            <div id="timer" class="flex flex-wrap justify-center gap-4 md:gap-8 mt-20 animate-fade-in-up" style="animation-delay: 1s;">
                 <!-- Will be populated by JS -->
             </div>
             
@@ -342,10 +374,10 @@
                                 </linearGradient>
                             </defs>
                             
-                            <!-- Path -->
+                            <!-- Path: Synced Animation with pathLength=1 for perfect timing -->
                             <path id="curve" d="M 50,150 Q 400,-50 750,150" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="2" stroke-dasharray="8 8" />
-                            <path d="M 50,150 Q 400,-50 750,150" fill="none" stroke="url(#pathGrad)" stroke-width="2" stroke-linecap="round">
-                                <animate attributeName="stroke-dasharray" from="0, 1000" to="1000, 0" dur="3s" repeatCount="indefinite" />
+                            <path d="M 50,150 Q 400,-50 750,150" fill="none" stroke="url(#pathGrad)" stroke-width="3" stroke-linecap="round" pathLength="1">
+                                <animate attributeName="stroke-dasharray" from="0 1" to="1 0" dur="5s" repeatCount="indefinite" />
                             </path>
 
                             <!-- Locations -->
@@ -365,9 +397,9 @@
                                 </circle>
                             </g>
 
-                            <!-- Plane -->
+                            <!-- Plane: Synced Animation -->
                             <g>
-                                <animateMotion dur="6s" repeatCount="indefinite" rotate="auto">
+                                <animateMotion dur="5s" repeatCount="indefinite" rotate="auto">
                                     <mpath href="#curve" />
                                 </animateMotion>
                                 <path d="M2 12l10-4l-10-4z" fill="#fff" transform="translate(-6, -6) scale(1.5)" />
@@ -499,20 +531,53 @@
         // --- STARS BACKGROUND ---
         function initStars() {
             const container = document.getElementById('stars-container');
-            const starCount = 100;
+            const starCount = 200;
             
+            // 1. Background Stars
             for(let i=0; i<starCount; i++) {
                 const star = document.createElement('div');
-                const size = Math.random() * 2 + 1;
-                star.className = 'absolute bg-white rounded-full opacity-0 animate-pulse';
-                star.style.width = `${size}px`;
-                star.style.height = `${size}px`;
+                const r = Math.random();
+                
+                // Varied sizes and opacities
+                let sizeClass, opacityClass;
+                if(r > 0.95) { // Large glowing stars
+                     sizeClass = 'w-1 h-1 shadow-[0_0_4px_#fff]';
+                     opacityClass = 'opacity-80';
+                } else if(r > 0.7) { // Medium
+                     sizeClass = 'w-0.5 h-0.5';
+                     opacityClass = 'opacity-60';
+                } else { // Tiny background stars
+                     sizeClass = 'w-[1px] h-[1px]';
+                     opacityClass = 'opacity-30';
+                }
+
+                star.className = `absolute bg-white rounded-full animate-pulse ${sizeClass} ${opacityClass}`;
                 star.style.left = `${Math.random() * 100}%`;
                 star.style.top = `${Math.random() * 100}%`;
-                star.style.animationDuration = `${Math.random() * 3 + 2}s`;
+                
+                // Varied Animation
+                star.style.animationDuration = `${Math.random() * 3 + 1}s`;
                 star.style.animationDelay = `${Math.random() * 5}s`;
+                
                 container.appendChild(star);
             }
+
+            // 2. Shooting Stars
+            setInterval(() => {
+                const shootingStar = document.createElement('div');
+                shootingStar.className = 'absolute h-[1px] bg-gradient-to-r from-white via-pink-200 to-transparent origin-left';
+                shootingStar.style.width = `${Math.random() * 100 + 50}px`;
+                shootingStar.style.left = `${Math.random() * 100}%`;
+                shootingStar.style.top = `${Math.random() * 50}%`; // Mostly top half
+                shootingStar.style.animation = `shooting ${Math.random() * 1 + 1}s linear forwards`;
+                
+                container.appendChild(shootingStar);
+                
+                // Cleanup
+                setTimeout(() => {
+                    if(shootingStar.parentElement) shootingStar.remove();
+                }, 2000);
+            }, 3000); // Create a new shooting star every 3 seconds
         }
 
         // --- CUSTOM CURSOR ---
@@ -529,8 +594,8 @@
             function animate() {
                 const dx = mouseX - cursorX;
                 const dy = mouseY - cursorY;
-                cursorX += dx * 0.1;
-                cursorY += dy * 0.1;
+                cursorX += dx * 0.15; // Slightly smoother
+                cursorY += dy * 0.15;
                 
                 cursor.style.transform = `translate(${cursorX}px, ${cursorY}px)`;
                 requestAnimationFrame(animate);
@@ -560,13 +625,31 @@
                     
                     // Start observers
                     initScrollObservers();
-                    
-                    // Try play audio
-                    if(audio) {
-                        audio.volume = 0.4;
-                        audio.play().then(() => updateMusicIcon(true)).catch(() => updateMusicIcon(false));
-                    }
                 }, 800);
+
+                // AUDIO AUTO-PLAY FIX
+                // Ensuring volume is up and triggering play on the user click interaction
+                if(audio) {
+                    audio.currentTime = 0;
+                    audio.volume = 0.5;
+                    audio.muted = false;
+                    const playPromise = audio.play();
+                    
+                    if (playPromise !== undefined) {
+                        playPromise.then(() => {
+                            updateMusicIcon(true);
+                        }).catch(error => {
+                            console.log("Autoplay prevented:", error);
+                            updateMusicIcon(false);
+                            // Fallback retry on next click anywhere
+                            document.addEventListener('click', () => {
+                                if(audio.paused) {
+                                    audio.play().then(() => updateMusicIcon(true));
+                                }
+                            }, { once: true });
+                        });
+                    }
+                }
             });
 
             musicBtn.addEventListener('click', () => {
@@ -623,13 +706,15 @@
             
             function createUnit(label, id) {
                 const div = document.createElement('div');
-                div.className = 'flex flex-col items-center mx-2 md:mx-4';
+                div.className = 'flex flex-col items-center group';
+                // Updated Timer Card HTML for more beauty
                 div.innerHTML = `
-                    <div class="relative w-20 h-20 md:w-24 md:h-24 glass-panel rounded-full flex items-center justify-center mb-2 border border-pink-500/10 shadow-[0_0_15px_rgba(236,72,153,0.1)] group hover:scale-105 transition-transform duration-300">
-                        <div class="absolute inset-0 rounded-full border border-pink-400/20 opacity-0 group-hover:opacity-100 transition-opacity animate-ping"></div>
-                        <span id="${id}" class="font-serif text-3xl md:text-4xl text-white">00</span>
+                    <div class="timer-card w-20 h-24 md:w-28 md:h-36 rounded-2xl flex items-center justify-center mb-3 relative overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-b from-pink-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                        <div class="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-pink-400/50 to-transparent"></div>
+                        <span id="${id}" class="font-serif text-4xl md:text-6xl text-white font-light z-10 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">00</span>
                     </div>
-                    <span class="text-[10px] uppercase tracking-widest text-slate-400 font-bold">${label}</span>
+                    <span class="text-[10px] md:text-xs uppercase tracking-[0.3em] text-pink-200/60 font-bold group-hover:text-pink-200 transition-colors">${label}</span>
                 `;
                 return div;
             }
@@ -647,10 +732,18 @@
                 const m = Math.floor((diff / 1000 / 60) % 60);
                 const s = Math.floor((diff / 1000) % 60);
 
-                document.getElementById('days').textContent = d.toString().padStart(2, '0');
-                document.getElementById('hours').textContent = h.toString().padStart(2, '0');
-                document.getElementById('minutes').textContent = m.toString().padStart(2, '0');
-                document.getElementById('seconds').textContent = s.toString().padStart(2, '0');
+                const update = (id, val) => {
+                    const el = document.getElementById(id);
+                    const formatted = val.toString().padStart(2, '0');
+                    if(el && el.textContent !== formatted) {
+                        el.textContent = formatted;
+                    }
+                };
+
+                update('days', d);
+                update('hours', h);
+                update('minutes', m);
+                update('seconds', s);
             }, 1000);
         }
 
